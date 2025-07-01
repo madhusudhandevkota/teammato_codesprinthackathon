@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, send_file
+from flask import Flask, request, jsonify, send_file, Blueprint
 from PIL import Image
 import io
 import sys
@@ -7,17 +7,17 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from engines.stt_engine import stt_service
 from engines.llm_engine import llm_service
 from engines.tts_engine import tts_service
-from pyngrok import ngrok
 from engines.classifier_engine import Classifier
+from pyngrok import ngrok
 
+# Create Blueprint with /api prefix
+api_bp = Blueprint('api', __name__, url_prefix='/api')
 
-
-app =Flask(__name__)
-llm_service =llm_service()
+llm_service = llm_service()
 tts_service = tts_service()
 stt_service = stt_service()
           
-@app.route('/upload-image', methods=['POST'])
+@api_bp.route('/upload-image', methods=['POST'])
 def upload_image():
     if 'image' not in request.files:
         return jsonify({'error': 'No image file found in the request'}), 400
@@ -26,7 +26,6 @@ def upload_image():
     try:
         image = Image.open(image_file)
         predicted_class = Classifier.classify_insects(image)
-        # response = predicted_class
         response = llm_service.generate_insect_info(predicted_class)
         return response, 200
 
@@ -34,7 +33,7 @@ def upload_image():
         return jsonify({'error': str(e)}), 500
 
 
-@app.route('/ask-bot', methods=['POST'])
+@api_bp.route('/ask-bot', methods=['POST'])
 def get_followup():
     data = (request.get_json())
     prompt = data.get('text', None)
@@ -45,7 +44,7 @@ def get_followup():
     return response, 200
     
                                         
-@app.route('/get-tts', methods=['POST'])
+@api_bp.route('/get-tts', methods=['POST'])
 def get_tts():
     data = (request.get_json())
     prompt = data.get('text', None)
@@ -63,7 +62,7 @@ def get_tts():
         mimetype='audio/wav'
     )
 
-@app.route('/ask-bot-audio', methods = ['POST'])
+@api_bp.route('/ask-bot-audio', methods = ['POST'])
 def get_answer_from_audio():
     if 'audio' not in request.files:
         return "No audio file found in the request.", 400
@@ -80,6 +79,8 @@ def get_answer_from_audio():
         return "SERVER ERROR", 500
     
 
+app = Flask(__name__)
+app.register_blueprint(api_bp)
 
 if(__name__ == "__main__"):
     #ngrok.set_auth_token("2zGZUFfEsQ6mqXbUH10181VVMCO_5WiRd157VZn9CfeXxZBj9")

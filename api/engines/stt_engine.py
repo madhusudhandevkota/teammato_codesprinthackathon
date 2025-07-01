@@ -9,9 +9,9 @@ from services.audio_services import convert_audio_from_buffer, convert_audio_to_
 class stt_service:
     
     def __init__(self):
-        self.client = speech.SpeechClient()
-        os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "/home/crazyanonymous/Krishi Sathi/Krishi-Sathi/api/services/keys/myprojecthackathonnec-e45dedae8996.json"
-        
+         os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "/home/crazyanonymous/Krishi Sathi/Krishi-Sathi/api/services/keys/myprojecthackathonnec-e45dedae8996.json"
+         self.client = speech.SpeechClient()
+       
     def transcribe_audio(self, input_buffer):
         res = ""
         try:

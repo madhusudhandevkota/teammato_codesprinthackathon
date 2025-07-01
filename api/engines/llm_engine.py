@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import requests
 import json
+import re
 
 class llm_service:
     def __init__(self):
@@ -34,6 +35,16 @@ class llm_service:
             print('Error:', error)
             return None
 
+    def _clean_llm_response(self, response):
+        if not response:
+            return None
+        # Remove markdown code block and json label if present
+        response = response.strip()
+        response = re.sub(r'^```json\n', '', response)
+        response = re.sub(r'^```', '', response)
+        response = re.sub(r'```$', '', response)
+        return response.strip()
+
     def generate_insect_info(self,insect_name):
         prompt = (
             f"Provide a summary about the insect '{insect_name}'. Include information about its causes, harmful effects, and "
@@ -44,34 +55,21 @@ class llm_service:
 
         try:
             response = self.generate_response(prompt)
-            # response = '''{
-                            
-            #                         "summary": {
-            #                             "summary_english": "Fall armyworms are a type of insect that can cause significant damage to crops. They are native to the Americas, but have recently spread to other parts of the world, including Africa and Asia. Fall armyworms feed on a variety of plants, including corn, rice, and sorghum. They can cause severe damage to crops, leading to reduced yields and economic losses. There are a number of different ways to control fall armyworms, including the use of insecticides, biological control, and cultural practices. Recommended fertilizers to prevent fall armyworms include those that are high in nitrogen and phosphorus.",
-            #                             "summary_nepali": "फॉल आर्मीवर्म एक प्रकारको किरा हो जसले बालीनालीमा उल्लेख्य क्षति पुर्‍याउन सक्छ। तिनीहरू अमेरिकाका मूल निवासी हुन्, तर हालै अफ्रिका र एसियासहित विश्वका अन्य भागहरूमा फैलिएका छन्। फॉल आर्मीवर्महरू मकै, धान र जुवारसहित विभिन्न प्रकारका बोटबिरुवाहरूमा खाने गर्छन्। तिनीहरूले बालीनालीमा गम्भीर क्षति पुर्‍याउन सक्छन्, जसले गर्दा उत्पादन घट्छ र आर्थिक नोक्सानी हुन्छ। फॉल आर्मीवर्महरूलाई नियन्त्रण गर्ने धेरै तरिकाहरू छन्, जसमा कीटनाशकहरूको प्रयोग, जैविक नियन्त्रण र सांस्कृतिक अभ्यासहरू समावेश छन्। फॉल आर्मीवर्महरूलाई रोक्न सिफारिस गरिएका मलहरूमा नाइट्रोजन र फस्फोरसमा उच्च हुनेहरू समावेश छन्।"
-            #                         },
-            #                         "followup_questions": {
-            #                             "english": [
-            #                                 "What are the symptoms of a fall armyworm infestation?",
-            #                                 "How can I identify fall armyworms?"
-            #                             ],
-            #                             "nepali": [
-            #                                 "फॉल आर्मीवर्म संक्रमणका लक्षणहरू के हुन्?",
-            #                                 "म फॉल आर्मीवर्महरूलाई कसरी पहिचान गर्न सक्छु?"
-            #                             ]
-            #                         }
-            #                 }'''
-            print(response)
-            response = eval(response)
+            response = self._clean_llm_response(response)
+            try:
+                response_dict = json.loads(response)
+            except Exception as error:
+                print('Error parsing JSON:', error)
+                return json.dumps({"error": "Invalid response from LLM"}, ensure_ascii=False)
             response_dict = {
                 "insect" : insect_name,
-                "message": response
+                "message": response_dict
             }
             response_json = json.dumps(response_dict, indent=4, ensure_ascii=False)
             return response_json
         except Exception as error:
             print('Error:', error)
-            return None
+            return json.dumps({"error": "Internal server error"}, ensure_ascii=False)
     
     def generate_followup(self, insect, question):
         prompt = (
@@ -82,32 +80,19 @@ class llm_service:
         try:
             print("sending request")
             response = self.generate_response(prompt)
-            # response = '''{
-                            
-            #                         "summary": {
-            #                             "summary_english": "Change armyworms are a type of insect that can cause significant damage to crops. They are native to the Americas, but have recently spread to other parts of the world, including Africa and Asia. Fall armyworms feed on a variety of plants, including corn, rice, and sorghum. They can cause severe damage to crops, leading to reduced yields and economic losses. There are a number of different ways to control fall armyworms, including the use of insecticides, biological control, and cultural practices. Recommended fertilizers to prevent fall armyworms include those that are high in nitrogen and phosphorus.",
-            #                             "summary_nepali": "CHange आर्मीवर्म एक प्रकारको किरा हो जसले बालीनालीमा उल्लेख्य क्षति पुर्‍याउन सक्छ। तिनीहरू अमेरिकाका मूल निवासी हुन्, तर हालै अफ्रिका र एसियासहित विश्वका अन्य भागहरूमा फैलिएका छन्। फॉल आर्मीवर्महरू मकै, धान र जुवारसहित विभिन्न प्रकारका बोटबिरुवाहरूमा खाने गर्छन्। तिनीहरूले बालीनालीमा गम्भीर क्षति पुर्‍याउन सक्छन्, जसले गर्दा उत्पादन घट्छ र आर्थिक नोक्सानी हुन्छ। फॉल आर्मीवर्महरूलाई नियन्त्रण गर्ने धेरै तरिकाहरू छन्, जसमा कीटनाशकहरूको प्रयोग, जैविक नियन्त्रण र सांस्कृतिक अभ्यासहरू समावेश छन्। फॉल आर्मीवर्महरूलाई रोक्न सिफारिस गरिएका मलहरूमा नाइट्रोजन र फस्फोरसमा उच्च हुनेहरू समावेश छन्।"
-            #                         },
-            #                         "followup_questions": {
-            #                             "english": [
-            #                                 "What are the types of infestation?",
-            #                                 "How can I identify My Friend?"
-            #                             ],
-            #                             "nepali": [
-            #                                 "फॉल आर्मीवर्म संक्रमणका लक्षणहरू के हुन्?",
-            #                                 "म फॉल आर्मीवर्महरूलाई कसरी पहिचान गर्न सक्छु?"
-            #                             ]
-            #                         }
-            #                 }'''
-            print(response)
-            response = eval(response)
+            response = self._clean_llm_response(response)
+            try:
+                response_dict = json.loads(response)
+            except Exception as error:
+                print('Error parsing JSON:', error)
+                return json.dumps({"error": "Invalid response from LLM"}, ensure_ascii=False)
             response_dict = {
                 "insect" : insect,
-                "message": response
+                "message": response_dict
             }
             response_json = json.dumps(response_dict, indent=4, ensure_ascii=False)
             return response_json
         except Exception as error:
             print('Error:', error)
-            return None
+            return json.dumps({"error": "Internal server error"}, ensure_ascii=False)
         
