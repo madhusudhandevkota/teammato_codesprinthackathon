@@ -7,6 +7,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from engines.stt_engine import stt_service
 from engines.llm_engine import llm_service
 from engines.tts_engine import tts_service
+from pyngrok import ngrok
 
 
 app =Flask(__name__)
@@ -77,4 +78,7 @@ def get_answer_from_audio():
         return "SERVER ERROR", 500
 
 if(__name__ == "__main__"):
-    app.run(debug=True, port = 3001)
+    ngrok.set_auth_token("2zGORncOEHjk3fFUqpvt6ySfgj4_5haCX3hWLAdj5c3gx44o8")
+    public_url = ngrok.connect(3001)
+    print(" * ngrok tunnel URL:", public_url)
+    app.run(debug=True, port=3001, host="0.0.0.0")
