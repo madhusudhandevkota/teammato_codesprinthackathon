@@ -5,4 +5,4 @@ class Classifier:
     def classify_insects(image: Image.Image) -> str:
         # Placeholder logic: always returns 'fall armyworm'
         # Replace with real classification logic as needed
-        return 'fall armyworm' 
+        return 'fruit fly'

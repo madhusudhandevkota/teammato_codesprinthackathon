@@ -4,12 +4,12 @@ import os
 import ffmpeg
 import pydub
 from services.audio_services import convert_audio_from_buffer, convert_audio_to_linear16
-
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "/home/crazyanonymous/Krishi Sathi/Krishi-Sathi/api/services/keys/myprojecthackathonnec-99f1dd8b366f.json"
 
 class stt_service:
     
     def __init__(self):
-         os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "/home/crazyanonymous/Krishi Sathi/Krishi-Sathi/api/services/keys/myprojecthackathonnec-e45dedae8996.json"
+         
          self.client = speech.SpeechClient()
        
     def transcribe_audio(self, input_buffer):
